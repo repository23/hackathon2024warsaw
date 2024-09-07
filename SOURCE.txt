@@ -1,0 +1,28 @@
+Made during ETHWarsaw 2024 hackathon
+
+
+Team members:
+1) repository23 - Barnaba P. - ticket: Order code WAWCON24-S7BHD
+etherwallet: 0xe2067cbc882484F570F043758BB3D778059B5449
+
+2) Ressac-No1 - Ressac
+
+
+License: GPLv3
+
+
+
+
+quote from faq and guidelines:
+"ETHWarsaw will not own the projects. Projects will have open source licence and will be publicly available and accessible, by the judges and whomever might be interested on Github.
+Final delivery will include:
+A working link to a Github repository containing the code, team members, presentations, demo, documentation, and SOURCE.md (or SOURCE.txt) file. The file must contain the following sentence “Made during ETHWarsaw 2024 hackathon”. Projects without this file won’t be allowed to win any bounty.
+A working link to a video with a demo or a pitch of the project, up to 3 minutes long.
+All projects need to be submitted through devpost platform (link will be uploaded soon)
+Each project to be licensed using GPLv3 or a license that's compatible with it
+If any document states something that contradicts the above guidelines, the above guidelines will be the ultimate source of truth.
+"
+
+SUBMITTION LINK
+https://ethwarsaw-hackathon-2024.devfolio.co/
+
