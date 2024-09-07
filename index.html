@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zkVerifyJS Proof Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e7f3fe;
+            border: 1px solid #2196F3;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>zkVerifyJS Proof Checker</h1>
+    <h2>Enter Proof Data</h2>
+    
+    <form id="proofForm">
+        <label for="proof">Proof:</label>
+        <input type="text" id="proof" name="proof" placeholder="Enter proof here" required>
+
+        <label for="publicSignals">Public Signals:</label>
+        <input type="text" id="publicSignals" name="publicSignals" placeholder="Enter public signals here" required>
+
+        <label for="vk">Verification Key (vk):</label>
+        <input type="text" id="vk" name="vk" placeholder="Enter verification key here" required>
+
+        <button type="button" id="checkProofBtn">Check the Proof</button>
+    </form>
+
+    <div class="result">
+        <h2>Proof Check Result:</h2>
+        <div id="result">Awaiting input...</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/zkverifyjs/dist/zkverify.js"></script>
+    <script>
+        document.getElementById('checkProofBtn').addEventListener('click', async function () {
+            // Get the values from the form inputs
+            const proof = document.getElementById('proof').value;
+            const publicSignals = document.getElementById('publicSignals').value;
+            const vk = document.getElementById('vk').value;
+
+            try {
+                // Call zkVerifyJS's execute function with the user inputs
+                const result = await zkverify.execute(proof, publicSignals, vk);
+
+                // Display the result (true or false)
+                document.getElementById('result').innerText = result ? 'True' : 'False';
+            } catch (error) {
+                console.error('Error checking the proof:', error);
+                document.getElementById('result').innerText = 'Error occurred while checking the proof.';
+            }
+        });
+    </script>
+
+</body>
+</html>
