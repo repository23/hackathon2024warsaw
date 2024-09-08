@@ -41,6 +41,10 @@ export function useZkVerify(selectedAccount: string | null) {
         throw new Error(`Connection failed: ${(error as Error).message}`);
       }
 
+      console.log(proofData);
+      console.log(publicSignals);
+      console.log(vk);
+
       const { events, transactionResult } = await session
         .verify()
         .groth16()

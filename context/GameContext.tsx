@@ -2,7 +2,7 @@ import { useToast } from "@chakra-ui/react";
 import { useContract } from "@thirdweb-dev/react";
 import { useZkVerify } from "./useZkVerify";
 import React from "react";
-import vkey from "../verify_key.json";
+import vkey from "../VerificationKey.json";
 
 export const COLORS: Record<number, Record<string, string>> = {
   0: {
