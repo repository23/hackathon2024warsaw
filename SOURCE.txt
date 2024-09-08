@@ -5,8 +5,8 @@ Team members:
 1) repository23 - Barnaba P. - ticket: Order code WAWCON24-S7BHD
 etherwallet: 0xe2067cbc882484F570F043758BB3D778059B5449
 
-2) Ressac-No1 - Ressac
-
+2) Ressac-No1 - Ressac - ticket: Order code WAWCON24-RVNTF
+etherwallet: 0x1faAea0522Ef33BaA184147e5DA22111AE98cC67
 
 License: GPLv3
 
