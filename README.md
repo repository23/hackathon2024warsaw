@@ -1,71 +1,21 @@
-# zk-mastermind
+# Verifiable zk-mastermind
 
-zk-mastermind is an implementation of the popular Mastermind game using zero-knowledge proofs for verification.
+We convert the zk-mastermind game into a zkVerify-compatible mode. The author of the original project is [adam-maj](https://github.com/adam-maj/zk-mastermind)
 
-[The live version of the game can be found here](https://zk-mastermind.vercel.app/) 🧠
+## Added features
 
-This game was built using:
+Compared with the original game, we import the zkVerify library to handle the verification of any submitted guess. Once the player (act as the code breaker) orders to verify a previous guess, the zk proof and relevant public signals of that guess are displayed at the frontend, and a zkVerify session is triggered to verify that proof.
 
-- [Circom](https://docs.circom.io/), the popular zkSNARK circuit programming language, for the actual mastermind zk circuit.
-- [snarkjs](https://github.com/iden3/snarkjs) to generate zkSNARK proofs using the circuit behind an API.
-- [thirdweb](https://thirdweb.com) to deploy the verifier smart contract
-- [Next](https://nextjs.org/) for the frontend application and API.
-- [Chakra](https://chakra-ui.com/) for the frontend UI components and styling.
+Our modification on the original repo comprises:
 
-![zkMastermind](/public/mastermind.png)
+- `components/Game.tsx`: the gameplay frontend, we created two additional textboxes to output the zk proof and list of public signals of a submitted guess once it requires verification.
+- `context/GameContext.tsx`: the React context holding game states, in which we applied the zkVerify hook to operate a proof verification by zkVerify.
+- `context/useZkVerify.ts`: the zkVerify hook, almost directly derived from the sample sudoku project.
 
-## Rules of the game
+## Challenges
 
-**Mastermind is a game of breaking codes.** It involves two parties: the code maker and the code breaker.
+## Team members & roles
 
-Every game, the computer (the code maker) comes up with a random code. You're goal as the code breaker is to correctly guess the code within 10 turns.
+- Barnaba Pawelczak: frontend designing, debugging and presentation slides
+- RSSC No1: base project exploration, programming, local environment configuration and testing
 
-Each time you make a guess, you can check it and the code breaker will tell you how close your guess was with two simple pieces of information:
-
-1. How many of the pegs in your guess are the correct color and in the correct position?
-2. How many of the pegs in your guess are the correct color but in the wrong position?
-
-Using only this information, you have to break the code.
-
-## Why zero-knowledge proofs?
-
-You may be wondering how zero-knowledge proofs fit into all this.
-
-Consider the following question: how do you know that the code breaker is telling the truth when it gives you its response?
-
-Since you don't have the code, the code breaker could be completely lying about how much of your guess is correct, and you wouldn't know. So how do we solve this issue?
-
-What if the code breaker could prove to us that they have some specific code - and for that code, our guess has a specific number correct and partially correct - all without revealing the code itself.
-
-This is exactly what zero-knowledge proofs let us do!
-
-In fact, this is exactly what's happening with this game:
-
-1. You submit your guess and the code breaker responds with the number correct and partial, along with a zkSNARK proof that they are telling the truth.
-2. You can verify this proof by sending it to a smart contract deployed on-chain, which will confirm that the zkSNARK is valid.
-
-## Interacting with the project locally
-
-Before running the project, you'll need to create a `.env.local` file in the root of the project and add the `NEXT_PUBLIC_VERIFYING_CONTRACT_ADDRESS` environment variable. This should be set to the address of the verifying contract deployed on-chain to goerli - you can use the contract address used by the actual game if you don't want to deploy your own: `0xC6997E09edF6AEFEf7c0D2240089D46A88B42347`.
-
-You can run the project locally after running `yarn install` by running the `yarn dev` command in the root directory. This will start the frontend and API on `localhost:3000`.
-
-### Editing the zero-knowledge circuit
-
-The actual zero-knowledge circuit for the mastermind game can be found in the `circuits/mastermind/circuit.circom` file.
-
-After making any edits to this file, you'll have to compile the circuit with the `yarn build:circuits` command.
-
-This comamnd will run through a number of steps necessary to securely compile and generate the circuit - including the trusted setup process using a Powers of Tau [setup ceremony](https://zkproof.org/2021/06/30/setup-ceremonies/), where it will prompt you to enter a random string as entropy twice.
-
-Once you build the circuits, you can generate and deploy a new verifier smart contract with the `yarn build:contract` and `yarn deploy` commands.
-
-## Core components of the project
-
-The core logic and interesting files in this project are:
-
-- `circuits/mastermind/circuit.circom`: the actual zero-knowledge circuit for the mastermind game, which includes an algorithm to verify that a specific guess and solution pair have a specific number of correct and partially correct pegs.
-- `contracts/Verifier.sol`: the smart contract that verifies zkSNARK proofs generated by the circuit (via the Next API).
-- `pages/api/proof.ts`: the Next API endpoint that generates zkSNARK proofs for a given guess and solution pair using the compiled WASM circuit.
-- `context/GameContext.tsx`: the React context that manages the entire frontend game state, including the current guess, solution, and number of correct and partially correct pegs.
-- `components/Game.tsx`: the React component that handles rendering of the entire game baord and logs section.
