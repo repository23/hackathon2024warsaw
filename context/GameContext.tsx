@@ -291,7 +291,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
       .map((color: number) => COLORS[color].name)
       .join(", ");
 
-    dispatch({
+    /*dispatch({
       type: "ADD_LOG",
       payload: {
         title: `Verifying proof of guess ${
@@ -300,7 +300,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
           process.env.NEXT_PUBLIC_VERIFYING_CONTRACT_ADDRESS
         }`,
       },
-    });
+    });*/
 
     dispatch({
       type: "SET_LOADING",
@@ -317,13 +317,11 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
     );
     console.log(verified);
 
-    const isValid = await contract?.call("verifyProof", ...proof?.calldata);
-
     dispatch({
       type: "VERIFY_ROW",
       payload: {
         row,
-        valid: isValid,
+        valid: verified,
       },
     });
 
@@ -338,7 +336,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
     dispatch({
       type: "ADD_LOG",
       payload: {
-        title: isValid
+        title: verified
           ? `Proof succesfully verified by contract!`
           : `Contract rejected, proof is invalid!`,
       },
