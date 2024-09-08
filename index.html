@@ -64,8 +64,9 @@
         <div id="result">Awaiting input...</div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/zkverifyjs/dist/zkverify.js"></script>
-    <script>
+    <script type="module">
+        import { zkVerifySession, ZkVerifyEvents, VerifyTransactionInfo } from 'zkverifyjs';
+
         document.getElementById('checkProofBtn').addEventListener('click', async function () {
             // Get the values from the form inputs
             const proof = document.getElementById('proof').value;
@@ -73,14 +74,46 @@
             const vk = document.getElementById('vk').value;
 
             try {
-                // Call zkVerifyJS's execute function with the user inputs
-                const result = await zkverify.execute(proof, publicSignals, vk);
+                // Start a new zkVerifySession on the testnet
+                const session = await zkVerifySession.start()
+                    .Testnet()
+                    .withAccount('your-seed-phrase'); // Replace 'your-seed-phrase' with the actual value
 
-                // Display the result (true or false)
-                document.getElementById('result').innerText = result ? 'True' : 'False';
+                // Execute the verification transaction
+                const { events, transactionResult } = await session.verify().risc0()
+                    .waitForPublishedAttestation()
+                    .execute(proof, publicSignals, vk);
+
+                // Listen for the 'includedInBlock' event
+                events.on(ZkVerifyEvents.IncludedInBlock, (eventData) => {
+                    console.log('Transaction included in block:', eventData);
+                });
+
+                // Listen for the 'finalized' event
+                events.on(ZkVerifyEvents.Finalized, (eventData) => {
+                    console.log('Transaction finalized:', eventData);
+                });
+
+                // Listen for errors
+                events.on('error', (error) => {
+                    console.error('An error occurred during the transaction:', error);
+                    document.getElementById('result').innerText = 'Error occurred while checking the proof.';
+                });
+
+                // Await the final transaction result
+                const transactionInfo = await transactionResult;
+
+                // Display the result based on the final transaction status
+                document.getElementById('result').innerText = 'Transaction completed successfully: ' + JSON.stringify(transactionInfo);
+
             } catch (error) {
                 console.error('Error checking the proof:', error);
                 document.getElementById('result').innerText = 'Error occurred while checking the proof.';
+            } finally {
+                // Close the session when done
+                if (session) {
+                    await session.close();
+                }
             }
         });
     </script>
