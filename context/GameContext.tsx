@@ -54,47 +54,47 @@ export const COLORS: Record<number, Record<string, string>> = {
 
 type GameAction =
   | {
-      type: "CHOOSE_COLOR";
-      payload: {
-        color: number;
-      };
-    }
-  | {
-      type: "EDIT_ROW";
-      payload: {
-        row: number;
-        index: number;
-        value: number;
-      };
-    }
-  | {
-      type: "SUBMIT_ROW";
-      payload: {
-        row: number;
-        proof: ZKProof;
-      };
-    }
-  | {
-      type: "VERIFY_ROW";
-      payload: {
-        row: number;
-        valid: boolean;
-      };
-    }
-  | {
-      type: "ADD_LOG";
-      payload: Log;
-    }
-  | {
-      type: "SET_LOADING";
-      payload: {
-        row: number;
-        loading: boolean;
-      };
-    }
-  | {
-      type: "NEW_GAME";
+    type: "CHOOSE_COLOR";
+    payload: {
+      color: number;
     };
+  }
+  | {
+    type: "EDIT_ROW";
+    payload: {
+      row: number;
+      index: number;
+      value: number;
+    };
+  }
+  | {
+    type: "SUBMIT_ROW";
+    payload: {
+      row: number;
+      proof: ZKProof;
+    };
+  }
+  | {
+    type: "VERIFY_ROW";
+    payload: {
+      row: number;
+      valid: boolean;
+    };
+  }
+  | {
+    type: "ADD_LOG";
+    payload: Log;
+  }
+  | {
+    type: "SET_LOADING";
+    payload: {
+      row: number;
+      loading: boolean;
+    };
+  }
+  | {
+    type: "NEW_GAME";
+  };
 
 type ZKProof = {
   proof: {
@@ -235,9 +235,8 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
     dispatch({
       type: "ADD_LOG",
       payload: {
-        title: `Sending guess ${
-          row + 1
-        } [${guessText}] to be checked by the code maker`,
+        title: `Sending guess ${row + 1
+          } [${guessText}] to be checked by the code maker`,
       },
     });
 
@@ -275,11 +274,9 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
     dispatch({
       type: "ADD_LOG",
       payload: {
-        title: `Received zkSNARK proof from the code maker that guess ${
-          row + 1
-        } has ${data.publicSignals[6]} exact and ${
-          data.publicSignals[5]
-        } partial`,
+        title: `Received zkSNARK proof from the code maker that guess ${row + 1
+          } has ${data.publicSignals[6]} exact and ${data.publicSignals[5]
+          } partial`,
         body: `${JSON.stringify(data.proof)}`,
       },
     });
@@ -310,11 +307,14 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
       },
     });
 
-    const transactionInfo = await onVerifyProof(
-      JSON.stringify(proof.proof),
-      proof.publicSignals,
-      vkey
-    );
+    if (proof) {
+      const transactionInfo = await onVerifyProof(
+        JSON.stringify(proof.proof),
+        proof.publicSignals,
+        vkey
+      );
+    }
+
     console.log(verified);
 
     dispatch({

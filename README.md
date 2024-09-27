@@ -1,8 +1,25 @@
 # Verifiable zk-mastermind
 
-We convert the zk-mastermind game into a zkVerify-compatible mode. The author of the original project is [adam-maj](https://github.com/adam-maj/zk-mastermind)
+## Deployment
 
-![Verifiable zkMastermind](/public/verifiable_mastermind.png)
+Currently, the repository is not connected to Vercel, so manual deployment is required after making changes.
+
+Steps:
+
+1. Install [Vercel CLI](https://vercel.com/docs/cli)
+
+2. Create a `./.vercel/project.json` file and add the following content:
+
+   ```json
+   {
+     "orgId": "your_org_id_here",
+     "projectId": "your_project_id_here"
+   }
+   ```
+
+3. Deploy:
+   - For a preview deployment: `vercel`
+   - For a production deployment: `vercel --prod`
 
 ## Added features
 
@@ -23,4 +40,3 @@ The other major issue on which we are struggling is the intricacy of local testi
 
 - Barnaba Pawelczak: frontend designing, debugging and presentation slides
 - RSSC No1: base project exploration, programming, local environment configuration and testing
-

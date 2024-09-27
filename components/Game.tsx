@@ -109,14 +109,14 @@ const Game: React.FC = () => {
                       onClick={
                         rowIndex === currentRow && !game.solved
                           ? () =>
-                              dispatch({
-                                type: "EDIT_ROW",
-                                payload: {
-                                  row: rowIndex,
-                                  index: valIndex,
-                                  value: game.color,
-                                },
-                              })
+                            dispatch({
+                              type: "EDIT_ROW",
+                              payload: {
+                                row: rowIndex,
+                                index: valIndex,
+                                value: game.color,
+                              },
+                            })
                           : undefined
                       }
                     />
@@ -143,8 +143,8 @@ const Game: React.FC = () => {
                           row.correct > index
                             ? "red.400"
                             : row.correct + row.partial > index
-                            ? "white"
-                            : "#111"
+                              ? "white"
+                              : "#111"
                         }
                         border="1px solid #333"
                         w="16px"
@@ -308,7 +308,7 @@ const Game: React.FC = () => {
             }}
           >
             <Text>
-              {game.focusedRow >= 0 ? `${JSON.stringify(game.board[game.focusedRow].proof.proof)}` : ""}
+              {game.focusedRow >= 0 ? `${JSON.stringify(game.board[game.focusedRow]?.proof?.proof ?? '')}` : ""}
             </Text>
           </Stack>
         </Flex>
@@ -340,7 +340,7 @@ const Game: React.FC = () => {
             }}
           >
             <Text>
-              {game.focusedRow >= 0 ? `${JSON.stringify(game.board[game.focusedRow].proof.publicSignals)}` : ""}
+              {game.focusedRow >= 0 ? `${JSON.stringify(game.board[game.focusedRow]?.proof?.publicSignals ?? [])}` : ""}
             </Text>
           </Stack>
         </Flex>
