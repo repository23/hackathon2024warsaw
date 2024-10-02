@@ -1,5 +1,4 @@
 import { useToast } from "@chakra-ui/react";
-import { useContract } from "@thirdweb-dev/react";
 import { useZkVerify } from "./useZkVerify";
 import React from "react";
 import vkey from "../VerificationKey.json";
@@ -210,9 +209,7 @@ const gameReducer = (state: Game, action: GameAction) => {
 
 const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
   const toast = useToast();
-  const { contract } = useContract(
-    process.env.NEXT_PUBLIC_VERIFYING_CONTRACT_ADDRESS
-  );
+
   const [game, dispatch] = React.useReducer(
     gameReducer,
     JSON.parse(JSON.stringify(DEFAULT_GAME))
@@ -284,20 +281,6 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
   async function verify(row: number) {
     const proof = game.board[row].proof;
-    const guessText = game.board[row].guess
-      .map((color: number) => COLORS[color].name)
-      .join(", ");
-
-    /*dispatch({
-      type: "ADD_LOG",
-      payload: {
-        title: `Verifying proof of guess ${
-          row + 1
-        } [${guessText}] on-chain with function 'verifyProof' on smart contract ${
-          process.env.NEXT_PUBLIC_VERIFYING_CONTRACT_ADDRESS
-        }`,
-      },
-    });*/
 
     dispatch({
       type: "SET_LOADING",
@@ -308,39 +291,63 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
     });
 
     if (proof) {
-      const transactionInfo = await onVerifyProof(
-        JSON.stringify(proof.proof),
-        proof.publicSignals,
-        vkey
-      );
+      try {
+        const verifiedResult = await onVerifyProof(
+            JSON.stringify(proof.proof),
+            proof.publicSignals,
+            vkey
+        );
+
+        dispatch({
+          type: "VERIFY_ROW",
+          payload: {
+            row,
+            valid: verifiedResult,
+          },
+        });
+
+        dispatch({
+          type: "ADD_LOG",
+          payload: {
+            title: verifiedResult
+                ? `Proof successfully verified on zkVerify!`
+                : `zkVerify rejected, proof is invalid!`,
+          },
+        });
+
+        if (!verifiedResult) {
+          toast({
+            title: "Verification failed!",
+            description: "zkVerify: Your proof was not verified. Please try again.",
+            status: "error",
+          });
+        } else {
+          toast({
+            title: "Verification successful!",
+            description: "zkVerify: Your proof was successfully verified.",
+            status: "success",
+          });
+        }
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        dispatch({
+          type: "ADD_LOG",
+          payload: {
+            title: "Proof verification failed",
+            body: errorMessage,
+          },
+        });
+      } finally {
+        dispatch({
+          type: "SET_LOADING",
+          payload: {
+            row,
+            loading: false,
+          },
+        });
+      }
     }
-
-    console.log(verified);
-
-    dispatch({
-      type: "VERIFY_ROW",
-      payload: {
-        row,
-        valid: verified,
-      },
-    });
-
-    dispatch({
-      type: "SET_LOADING",
-      payload: {
-        row,
-        loading: false,
-      },
-    });
-
-    dispatch({
-      type: "ADD_LOG",
-      payload: {
-        title: verified
-          ? `Proof succesfully verified by contract!`
-          : `Contract rejected, proof is invalid!`,
-      },
-    });
   }
 
   return (

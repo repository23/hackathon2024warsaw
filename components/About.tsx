@@ -32,8 +32,8 @@ const About: React.FC = () => {
         the truth.
         <br />
         <br />
-        (2) You can verify this proof by sending it to a smart contract deployed
-        on-chain, which will confirm that the zkSNARK is valid.
+        (2) You can verify this proof by sending it to zkVerify rather than on-chain contract code - drastically reducing proof verification costs.
+        For more details please see https://zkverify.io
       </Text>
     </Stack>
   );

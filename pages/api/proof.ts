@@ -37,6 +37,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const salt = 50;
   const solution = getSolution(id);
+  console.log("Solution for game id", id, ":", solution);
   const solutionHash = F.toObject(poseidon([salt, ...solution])).toString();
 
   const partialsGuess = [0, 0, 0, 0];
@@ -81,20 +82,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     "circuits/mastermind/keys/circuit_final.zkey"
   );
 
-  // required to generate solidity call params
-  const editedPublicSignals = ff.utils.unstringifyBigInts(publicSignals);
-  const editedProof = ff.utils.unstringifyBigInts(proof);
-
-  // Generate solidity compatible params for Verifier.sol
-  const calldata = await snarkjs.groth16.exportSolidityCallData(
-    editedProof,
-    editedPublicSignals
-  );
-
   return res.status(200).json({
     proof,
     publicSignals,
-    calldata: JSON.parse(`[${calldata}]`),
   });
 };
 

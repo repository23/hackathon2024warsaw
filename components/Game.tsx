@@ -177,7 +177,7 @@ const Game: React.FC = () => {
                   {row.isVerified && !!row.isValid && (
                     <Flex flexGrow={1} justify="center" gap={2} minWidth="64px">
                       <Tooltip
-                        label="The code makers proof for this row has been verified by a zkSNARK"
+                        label="The code makers proof for this row has been verified by zkVerify"
                         fontSize="xs"
                         hasArrow
                       >

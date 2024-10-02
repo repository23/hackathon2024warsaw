@@ -85,16 +85,16 @@ template Mastermind(codeSize, numColors) {
       partialOrCorrect[i * codeSize + j].in[1] <== solution[j];
 
       // Check if guess[i] == solution[i]
-      doesIMatch[i * codeSize + j] = IsEqual(); 
+      doesIMatch[i * codeSize + j] = IsEqual();
       doesIMatch[i * codeSize + j].in[0] <== guess[i];
       doesIMatch[i * codeSize + j].in[1] <== solution[i];
 
       // Check if guess[j] == solution[j]
-      doesJMatch[i * codeSize + j] = IsEqual(); 
+      doesJMatch[i * codeSize + j] = IsEqual();
       doesJMatch[i * codeSize + j].in[0] <== guess[j];
       doesJMatch[i * codeSize + j].in[1] <== solution[j];
 
-      isPartial[i * codeSize + j] = MultiAND(i + j + 3); 
+      isPartial[i * codeSize + j] = MultiAND(i + j + 3);
       isPartial[i * codeSize + j].in[0] <== partialOrCorrect[i * codeSize + j].out;
       isPartial[i * codeSize + j].in[1] <== 1 - doesIMatch[i * codeSize + j].out;
       isPartial[i * codeSize + j].in[2] <== 1 - doesJMatch[i * codeSize + j].out;

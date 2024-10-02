@@ -5,7 +5,7 @@ export function useZkVerify(selectedAccount: string | null) {
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const onVerifyProof = async (proof: string, publicSignals: string[], vk: any) => {
+  const onVerifyProof = async (proof: string, publicSignals: string[], vk: any): Promise<boolean> => {
     setVerifying(true);
     setVerified(false);
     setError(null);
@@ -18,11 +18,7 @@ export function useZkVerify(selectedAccount: string | null) {
       if (!proof || !publicSignals || !vk) {
         throw new Error('Proof, public signals, or verification key is missing');
       }
-/*
-      if (!selectedAccount) {
-        throw new Error('No account connected');
-      }
-*/
+
       const proofData = JSON.parse(proof);
 
       let zkVerifySession;
@@ -30,7 +26,7 @@ export function useZkVerify(selectedAccount: string | null) {
         zkVerifySession = (await import('zkverifyjs')).zkVerifySession;
       } catch (error: unknown) {
         throw new Error(
-          `Failed to load zkVerifySession: ${(error as Error).message}`
+            `Failed to load zkVerifySession: ${(error as Error).message}`
         );
       }
 
@@ -41,14 +37,10 @@ export function useZkVerify(selectedAccount: string | null) {
         throw new Error(`Connection failed: ${(error as Error).message}`);
       }
 
-      console.log(proofData);
-      console.log(publicSignals);
-      console.log(vk);
-
       const { events, transactionResult } = await session
-        .verify()
-        .groth16()
-        .execute(proofData, publicSignals, vk);
+          .verify()
+          .groth16()
+          .execute(proofData, publicSignals, vk);
 
       events.on('ErrorEvent', (eventData) => {
         console.error(JSON.stringify(eventData));
@@ -61,14 +53,19 @@ export function useZkVerify(selectedAccount: string | null) {
         throw new Error(`Transaction failed: ${(error as Error).message}`);
       }
 
+      console.log(`zkVerify Success: ${JSON.stringify(transactionInfo)}`);
+
       if (transactionInfo && transactionInfo.attestationId) {
         setVerified(true);
-        return transactionInfo;
+        console.log("returning tx info...");
+        return true;
       } else {
+        setVerified(false);
         throw new Error("Your proof isn't correct.");
       }
     } catch (error: unknown) {
       setError((error as Error).message);
+      return false;
     } finally {
       setVerifying(false);
     }

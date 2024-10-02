@@ -19,13 +19,13 @@ export default function Mastermind() {
   return (
     <>
       <NextSeo
-        title="zkMastermind"
-        description="An on-chain code-breaker game built with zero-knowledge proofs"
+        title="zkMastermind x zkVerify"
+        description="An on-chain code-breaker game built with zero-knowledge proofs with verification by zkVerify"
         openGraph={{
-          url: "https://zk-mastermind.vercel.app",
-          title: "zkMastermind",
+          url: "https://zkmastermind.zkverify.io",
+          title: "zkMastermind x zkVerify",
           description:
-            "An on-chain code-breaker game built with zero-knowledge proofs",
+            "An on-chain code-breaker game built with zero-knowledge proofs with verification by zkVerify",
           images: [
             {
               url: "https://zk-mastermind.vercel.app/mastermind.png",
@@ -36,17 +36,12 @@ export default function Mastermind() {
             },
           ],
         }}
-        twitter={{
-          handle: "@majmudaradam",
-          site: "@majmudaradam",
-          cardType: "summary_large_image",
-        }}
       />
       <Stack align="center" py="40px" minHeight="100vh" position="relative">
         <Container height="100%" alignItems="space-between">
           <Stack align="center" spacing={5}>
             <Heading size="xl" color="white">
-              zkMastermind
+              zkMastermind x zkVerify
             </Heading>
 
             <Tabs
