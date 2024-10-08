@@ -5,7 +5,6 @@
   "author": "adam-maj <mr.adam.maj@gmail.com>",
   "scripts": {
     "build:circuits": "./scripts/compile_circuit.sh",
-    "deploy": "npx thirdweb@latest deploy",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -15,8 +14,7 @@
     "@chakra-ui/react": "^2.3.6",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
-    "@thirdweb-dev/react": "^3.4.4",
-    "@thirdweb-dev/sdk": "^3.4.4",
+    "@talismn/connect-components": "^1.1.8",
     "@types/seedrandom": "^3.0.2",
     "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.7",
@@ -35,7 +33,7 @@
   },
   "devDependencies": {
     "@types/node": "18.11.7",
-    "@types/react": "18.0.24",
+    "@types/react": "^18.3.11",
     "@types/react-dom": "18.0.8",
     "eslint": "8.26.0",
     "eslint-config-next": "13.0.0",
