@@ -18,10 +18,9 @@ const WalletSelect = dynamic(() => import('@talismn/connect-components').then((m
 });
 
 const ConnectWalletButton = forwardRef<ConnectWalletButtonHandle, ConnectWalletButtonProps>((props, ref) => {
-    const { selectedAccount, setSelectedAccount } = useAccount();
+    const { selectedAccount, setSelectedAccount, selectedWalletSource, setSelectedWalletSource } = useAccount();
     const [isWalletSelectOpen, setIsWalletSelectOpen] = useState<boolean>(false);
     const [zkVerifyTriggered, setZkVerifyTriggered] = useState<null | number>(null);
-    const [selectedWalletSource, setSelectedWalletSource] = useState<string | null>(null);
 
     const toast = useToast();
 
@@ -31,21 +30,15 @@ const ConnectWalletButton = forwardRef<ConnectWalletButtonHandle, ConnectWalletB
         setZkVerifyTriggered: (rowIndex: number) => setZkVerifyTriggered(rowIndex),
     }));
 
-    const handleWalletConnectOpen = () => {
-        setIsWalletSelectOpen(true);
-    };
-
-    const handleWalletConnectClose = () => {
-        setIsWalletSelectOpen(false);
-    };
+    const handleWalletConnectOpen = () => setIsWalletSelectOpen(true);
+    const handleWalletConnectClose = () => setIsWalletSelectOpen(false);
 
     const handleWalletSelected = (wallet: any) => {
-        console.log('Wallet selected:', wallet);
-        setSelectedWalletSource(wallet.source);
+        setSelectedWalletSource(wallet.source || wallet.extensionName);
     };
 
+
     const handleUpdatedAccounts = (accounts: any[] | undefined) => {
-        console.log('Updated accounts:', accounts);
         if (accounts && accounts.length > 0) {
             setSelectedAccount(accounts[0].address);
         } else {
@@ -61,8 +54,13 @@ const ConnectWalletButton = forwardRef<ConnectWalletButtonHandle, ConnectWalletB
     };
 
     const handleAccountSelected = (account: any) => {
-        console.log('Account selected:', account);
         setSelectedAccount(account.address);
+
+        if (zkVerifyTriggered !== null) {
+            props.onWalletConnected(zkVerifyTriggered);
+            setZkVerifyTriggered(null);
+        }
+
         toast({
             title: 'Account Connected',
             description: `Connected account: ${account.address}`,
@@ -70,33 +68,6 @@ const ConnectWalletButton = forwardRef<ConnectWalletButtonHandle, ConnectWalletB
             duration: 5000,
             isClosable: true,
         });
-
-        if (zkVerifyTriggered !== null) {
-            props.onWalletConnected(zkVerifyTriggered);
-            setZkVerifyTriggered(null);
-        }
-    };
-
-    const handleError = (error: any) => {
-        console.error('Error during wallet interaction:', error);
-
-        const errorMessage = error && typeof error === 'object' && 'message' in error
-            ? error.message
-            : 'Unknown error occurred during wallet interaction';
-
-        if (errorMessage && isCriticalError(errorMessage)) {
-            toast({
-                title: 'Error',
-                description: `An error occurred: ${errorMessage}`,
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-    };
-
-    const isCriticalError = (errorMessage: string) => {
-        return errorMessage !== 'Unknown error occurred during wallet interaction';
     };
 
     return (
@@ -110,7 +81,9 @@ const ConnectWalletButton = forwardRef<ConnectWalletButtonHandle, ConnectWalletB
                 borderRadius="5px"
                 onClick={handleWalletConnectOpen}
             >
-                {selectedAccount ? `Connected: ${selectedAccount.slice(0, 6)}...${selectedAccount.slice(-4)}` : 'Connect Wallet'}
+                {selectedAccount
+                    ? `Connected: ${selectedAccount.slice(0, 6)}...${selectedAccount.slice(-4)}`
+                    : 'Connect Wallet'}
             </Button>
 
             {isWalletSelectOpen && (
@@ -122,7 +95,6 @@ const ConnectWalletButton = forwardRef<ConnectWalletButtonHandle, ConnectWalletB
                     onWalletSelected={handleWalletSelected}
                     onUpdatedAccounts={handleUpdatedAccounts}
                     onAccountSelected={handleAccountSelected}
-                    onError={handleError}
                     showAccountsList={true}
                 />
             )}
@@ -131,5 +103,4 @@ const ConnectWalletButton = forwardRef<ConnectWalletButtonHandle, ConnectWalletB
 });
 
 ConnectWalletButton.displayName = 'ConnectWalletButton';
-
 export default ConnectWalletButton;

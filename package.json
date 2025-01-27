@@ -14,7 +14,7 @@
     "@chakra-ui/react": "^2.3.6",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
-    "@talismn/connect-components": "^1.1.8",
+    "@talismn/connect-components": "1.1.9",
     "@types/seedrandom": "^3.0.2",
     "circomlib": "^2.0.5",
     "circomlibjs": "^0.1.7",
@@ -29,7 +29,7 @@
     "remove": "^0.1.5",
     "seedrandom": "^3.0.5",
     "snarkjs": "^0.7.4",
-    "zkverifyjs": "^0.2.0"
+    "zkverifyjs": "^0.6.0"
   },
   "devDependencies": {
     "@types/node": "18.11.7",
