@@ -29,7 +29,7 @@
     "remove": "^0.1.5",
     "seedrandom": "^3.0.5",
     "snarkjs": "^0.7.4",
-    "zkverifyjs": "^0.2.0"
+    "zkverifyjs": "^0.6.0"
   },
   "devDependencies": {
     "@types/node": "18.11.7",

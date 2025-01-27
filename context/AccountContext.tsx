@@ -27,7 +27,7 @@ export const AccountProvider: FC<{ children: ReactNode }> = ({ children }) => {
     );
 };
 
-export const useAccount = () => {
+export const useAccount = (): AccountContextType => {
     const context = useContext(AccountContext);
     if (!context) {
         throw new Error('useAccount must be used within an AccountProvider');

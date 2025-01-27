@@ -1,5 +1,8 @@
-export function useZkVerify() {
+import { useAccount } from "./AccountContext";
+import { CurveType, Library } from "zkverifyjs";
 
+export function useZkVerify() {
+  const { selectedAccount, selectedWalletSource } = useAccount();
   const onVerifyProof = async (proof: string, publicSignals: string[], vk: any): Promise<{ verified: boolean; cancelled: boolean; error?: string }> => {
 
     let localCancelled = false;
@@ -22,8 +25,21 @@ export function useZkVerify() {
         throw new Error(`Failed to load zkVerifySession: ${(error as Error).message}`);
       }
 
-      const session = await zkVerifySession.start().Testnet().withWallet();
-      const { events, transactionResult } = await session.verify().groth16().execute(proofData, publicSignals, vk);
+      const session = await zkVerifySession.start()
+          .Testnet()
+          .withWallet({
+            accountAddress: selectedAccount!,
+            source: selectedWalletSource!
+      });
+      const { events, transactionResult } = await session.verify()
+          .groth16(Library.snarkjs, CurveType.bn128)
+          .execute({
+            proofData: {
+        proof: proofData,
+        publicSignals: publicSignals,
+        vk: vk
+        }
+      });
 
       events.on('ErrorEvent', (eventData) => {
         console.error('ErrorEvent:', JSON.stringify(eventData));
