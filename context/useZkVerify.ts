@@ -57,7 +57,7 @@ export function useZkVerify() {
         throw new Error(`Transaction failed: ${(error as Error).message}`);
       }
 
-      if (transactionInfo && transactionInfo.statement && transactionInfo.aggregationId >= 0) {
+      if (transactionInfo?.statement && transactionInfo?.aggregationId !== undefined && transactionInfo?.aggregationId >= 0) {
         return { verified: true, cancelled: false };
       } else {
         throw new Error("Your proof isn't correct.");
