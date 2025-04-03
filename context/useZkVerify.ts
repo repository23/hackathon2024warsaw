@@ -26,7 +26,7 @@ export function useZkVerify() {
       }
 
       const session = await zkVerifySession.start()
-          .Testnet()
+          .Volta()
           .withWallet({
             accountAddress: selectedAccount!,
             source: selectedWalletSource!
@@ -38,7 +38,8 @@ export function useZkVerify() {
         proof: proofData,
         publicSignals: publicSignals,
         vk: vk
-        }
+        },
+        domainId: 0
       });
 
       events.on('ErrorEvent', (eventData) => {
@@ -56,7 +57,7 @@ export function useZkVerify() {
         throw new Error(`Transaction failed: ${(error as Error).message}`);
       }
 
-      if (transactionInfo && transactionInfo.attestationId) {
+      if (transactionInfo && transactionInfo.statement && transactionInfo.aggregationId >= 0) {
         return { verified: true, cancelled: false };
       } else {
         throw new Error("Your proof isn't correct.");
