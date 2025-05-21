@@ -14,65 +14,49 @@ fs.readFileSync(
   path.join(process.cwd(), "circuits/mastermind/keys/circuit_final.zkey")
 );
 
-const getSolution = (seed: number) => {
-  const generator = random(seed.toString());
-  const solution = [];
-
-  for (let i = 0; i < 4; i++) {
-    solution.push(Math.floor(generator.quick() * 8));
-  }
-
-  return solution;
-};
-
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== "POST") {
     return res.status(405).end();
   }
 
-  const { guess, id } = req.body;
-
-  const poseidon = await buildPoseidon();
-  const F = poseidon.F;
-
-  const salt = 50;
-  const solution = getSolution(id);
-  const solutionHash = F.toObject(poseidon([salt, ...solution])).toString();
-
-  const partialsGuess = [0, 0, 0, 0];
-  const partialsSolution = [0, 0, 0, 0];
-
-  let numPartial = 0;
-  let numCorrect = 0;
-
-  for (let i = 0; i < guess.length; i++) {
-    for (let j = 0; j < guess.length; j++) {
-      if (guess[i] === solution[j]) {
-        if (i === j) {
-          numCorrect++;
-        } else {
-          if (
-            guess[j] !== solution[j] &&
-            guess[i] !== solution[i] &&
-            partialsSolution[j] === 0 &&
-            partialsGuess[i] == 0
-          ) {
-            numPartial++;
-            partialsGuess[i] = 1;
-            partialsSolution[j] = 1;
-          }
-        }
-      }
-    }
+  const { guessData, id } = req.body;
+  const { guess, numPartial, numCorrect } = guessData;
+  const CODE_SIZE = 4;
+  const NUM_ROWS = 10;
+  const NUM_COLORS = 8;
+  const REAL_ROWS = numPartial.length;
+  if (!(REAL_ROWS <= NUM_ROWS && numCorrect.length == REAL_ROWS && guess.length == REAL_ROWS * CODE_SIZE)) {
+    return res.status(400).end();
   }
 
+  const generator = random(id.toString());
+  const solution = [];
+  for (let i = 0; i < CODE_SIZE; i++) {
+    solution.push(Math.floor(generator.quick() * NUM_COLORS));
+  }
+
+  const poseidon = await buildPoseidon();
+
+  const salt = id * 42;
+  let rawHash = poseidon([salt, ...solution]);
+  for (let i = 0; i < NUM_ROWS; i++)
+    if (i < REAL_ROWS) {
+      rawHash = poseidon([rawHash, ...guess.slice(i * CODE_SIZE, (i + 1) * CODE_SIZE)]);
+    } else {
+      emptyGuess = Array(CODE_SIZE).fill(NUM_COLORS);
+      rawHash = poseidon([rawHash, ...emptyGuess]);
+      guess.concat(emptyGuess);
+      numPartial.concat([0]);
+      numCorrect.concat([0]);
+    }
+  const gameplayHash = poseidon.F.toObject(rawHash).toString();
   const inputs = {
-    guess: guess,
+    gameplayHash,
+    guess,
     numPartial,
     numCorrect,
-    solutionHash: solutionHash,
-    solution: solution,
-    solutionSalt: salt,
+    solution,
+    gameplaySalt: salt,
   };
 
   const { proof, publicSignals } = await snarkjs.groth16.fullProve(

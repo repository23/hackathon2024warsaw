@@ -5,7 +5,7 @@ export function useZkVerify(selectedAccount: string | null) {
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const onVerifyProof = async (proof: string, publicSignals: string[], vk: any) => {
+  const onVerifyProof = async (proof: string, publicSignals: string[], vk: any, connectedWallet: string | null, connectedAccountAddress: string | null) => {
     setVerifying(true);
     setVerified(false);
     setError(null);
@@ -19,7 +19,7 @@ export function useZkVerify(selectedAccount: string | null) {
         throw new Error('Proof, public signals, or verification key is missing');
       }
 /*
-      if (!selectedAccount) {
+      if (!connectedAccountAddress) {
         throw new Error('No account connected');
       }
 */
@@ -36,14 +36,13 @@ export function useZkVerify(selectedAccount: string | null) {
 
       let session;
       try {
-        session = await zkVerifySession.start().Testnet().withWallet();
+        session = await zkVerifySession.start().Volta().withWallet({
+	  source: connectedWallet,
+	  accountAddress: connectedAccountAddress
+	});
       } catch (error: unknown) {
         throw new Error(`Connection failed: ${(error as Error).message}`);
       }
-
-      console.log(proofData);
-      console.log(publicSignals);
-      console.log(vk);
 
       const { events, transactionResult } = await session
         .verify()

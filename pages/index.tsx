@@ -14,6 +14,7 @@ import { NextSeo } from "next-seo";
 import About from "../components/About";
 import Game from "../components/Game";
 import Rules from "../components/Rules";
+import Scores from "../components/Scores";
 
 export default function Mastermind() {
   return (
@@ -72,6 +73,9 @@ export default function Mastermind() {
                 <Tab as={Button} _selected={{ bg: "gray.100" }}>
                   About
                 </Tab>
+                <Tab as={Button} _selected={{ bg: "gray.100" }}>
+                  Hall of fame
+                </Tab>
               </ButtonGroup>
               <TabPanels>
                 <TabPanel pt="24px">
@@ -82,6 +86,9 @@ export default function Mastermind() {
                 </TabPanel>
                 <TabPanel pt="24px">
                   <About />
+                </TabPanel>
+                <TabPanel pt="24px">
+                  <Scores />
                 </TabPanel>
               </TabPanels>
             </Tabs>

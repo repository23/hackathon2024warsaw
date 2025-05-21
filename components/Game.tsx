@@ -14,14 +14,17 @@ import {
   AccordionButton,
   AccordionPanel,
 } from "@chakra-ui/react";
+import { useState } from "react";
 import { useGame, COLORS } from "../context/GameContext";
+import { WalletSelect } from '@talismn/connect-components';
 import { FaTimes } from "react-icons/fa";
 import { BsShieldCheck } from "react-icons/bs";
 
 const Game: React.FC = () => {
-  const { game, dispatch, submit, verify } = useGame();
+  const { game, dispatch, accountAddr, setAccountAddr, submitRow, submitGame, verify } = useGame();
+  const [ isWalletSelectOpen, setIsWalletSelectOpen ] = useState(false);
 
-  const currentRow = game.board.map((row) => row.isSubmitted).indexOf(false);
+  const currentRow = game.board.map((row) => row.submitted).indexOf(false);
 
   return (
     <Stack align="center" position="relative">
@@ -66,7 +69,73 @@ const Game: React.FC = () => {
               <Text fontSize="24px" alignSelf="flex-start">
                 G A M E
               </Text>
-              {(game.solved || game.board[9].isSubmitted) && (
+              <Button
+                size="sm"
+                colorScheme="orange"
+                onClick={() => setIsWalletSelectOpen(true)}
+              >
+                {accountAddr ? `${accountAddr.slice(0, 4)}...${accountAddr.slice(-4)}` : 'Connect'}
+              </Button>
+              {isWalletSelectOpen && (
+                <WalletSelect
+                  dappName="zkLeaderboardMastermind"
+                  open={isWalletSelectOpen}
+                  showAccountsList={false}
+                  onWalletConnectOpen={() => setIsWalletSelectOpen(true)}
+                  onWalletConnectClose={() => setIsWalletSelectOpen(false)}
+                  onWalletSelected={(wallet: any) => {}}  /* TODO: why is the wallet source always null? */
+                  onAccountSelected={(account: any) => setAccountAddr(account.address)}
+                  onUpdatedAccounts={(accounts: any[] | undefined) => setAccountAddr(accounts && accounts[0] ? accounts[0].address : null)}
+                />
+              )}
+              {game.solved && !game.proof && !game.verified && (
+                <Button
+                  size="sm"
+                  colorScheme="gray"
+                  onClick={() => submitGame()}
+                  isLoading={game.isLoading}
+                >
+                  Prove
+                </Button>
+              )}
+              {game.solved && game.proof && !game.verified && (
+                <Button
+                  size="sm"
+                  colorScheme="gray"
+                  variant="outline"
+                  onClick={() => verify()}
+                  isLoading={game.isLoading}
+                >
+                  zkVerify
+                </Button>
+              )}
+              {game.verified && game.valid && (
+                <Flex flexGrow={1} justify="center" gap={2} minWidth="64px">
+                  <Tooltip
+                    label="The proof sent for this gameplay has been verified by a zkSNARK"
+                    fontSize="xs"
+                    hasArrow
+                  >
+                    <Flex>
+                      <Icon as={BsShieldCheck} color="#666" boxSize={6} />
+                    </Flex>
+                  </Tooltip>
+                </Flex>
+              )}
+              {game.verified && !game.valid && (
+                <Flex flexGrow={1} justify="center" gap={2} minWidth="64px">
+                  <Tooltip
+                    label="The proof sent for this gameplay is invalid"
+                    fontSize="xs"
+                    hasArrow
+                  >
+                    <Flex>
+                      <Icon as={FaTimes} color="red.400" boxSize={5} />
+                    </Flex>
+                  </Tooltip>
+                </Flex>
+              )}
+              {(game.verified || game.board[9].submitted) && (
                 <Button
                   size="sm"
                   colorScheme="blue"
@@ -97,17 +166,17 @@ const Game: React.FC = () => {
                       borderColor={COLORS[color].border}
                       bg={COLORS[color].body}
                       cursor={
-                        rowIndex === currentRow && !game.solved
+                        rowIndex === currentRow && !game.solved && !game.board[rowIndex].submitted
                           ? "pointer"
                           : undefined
                       }
                       _hover={
-                        rowIndex === currentRow && !game.solved
+                        rowIndex === currentRow && !game.solved && !game.board[rowIndex].submitted
                           ? { opacity: 0.8 }
                           : undefined
                       }
                       onClick={
-                        rowIndex === currentRow && !game.solved
+                        rowIndex === currentRow && !game.solved && !game.board[rowIndex].submitted
                           ? () =>
                               dispatch({
                                 type: "EDIT_ROW",
@@ -153,54 +222,17 @@ const Game: React.FC = () => {
                       />
                     ))}
                   </Grid>
-                  {!game.solved && currentRow === rowIndex && (
+                  {!game.solved && currentRow === rowIndex && !game.board[rowIndex].submitted && (
                     <Button
                       size="xs"
                       width="64px"
                       isDisabled={row.guess.includes(8)}
-                      onClick={() => submit(rowIndex)}
-                      isLoading={row.isLoading}
+                      onClick={() => submitRow(rowIndex)}
                     >
                       Check
                     </Button>
                   )}
-                  {row.isSubmitted && !row.isVerified && (
-                    <Button
-                      size="xs"
-                      width="64px"
-                      onClick={() => verify(rowIndex)}
-                      isLoading={row.isLoading}
-                    >
-                      zkVerify
-                    </Button>
-                  )}
-                  {row.isVerified && !!row.isValid && (
-                    <Flex flexGrow={1} justify="center" gap={2} minWidth="64px">
-                      <Tooltip
-                        label="The code makers proof for this row has been verified by a zkSNARK"
-                        fontSize="xs"
-                        hasArrow
-                      >
-                        <Flex>
-                          <Icon as={BsShieldCheck} color="#666" boxSize={6} />
-                        </Flex>
-                      </Tooltip>
-                    </Flex>
-                  )}
-                  {row.isVerified && !row.isValid && (
-                    <Flex flexGrow={1} justify="center" gap={2} minWidth="64px">
-                      <Tooltip
-                        label="The code maker has sent an invalid proof for this row"
-                        fontSize="xs"
-                        hasArrow
-                      >
-                        <Flex>
-                          <Icon as={FaTimes} color="red.400" boxSize={5} />
-                        </Flex>
-                      </Tooltip>
-                    </Flex>
-                  )}
-                </Flex>
+               </Flex>
               </HStack>
             ))}
           </Flex>
@@ -308,7 +340,7 @@ const Game: React.FC = () => {
             }}
           >
             <Text>
-              {game.focusedRow >= 0 ? `${JSON.stringify(game.board[game.focusedRow].proof.proof)}` : ""}
+              {game.solved && game.proof ? `${JSON.stringify(game.proof.proof)}` : ""}
             </Text>
           </Stack>
         </Flex>
@@ -340,7 +372,7 @@ const Game: React.FC = () => {
             }}
           >
             <Text>
-              {game.focusedRow >= 0 ? `${JSON.stringify(game.board[game.focusedRow].proof.publicSignals)}` : ""}
+              {game.solved && game.proof ? `${JSON.stringify(game.proof.publicSignals)}` : ""}
             </Text>
           </Stack>
         </Flex>

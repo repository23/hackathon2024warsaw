@@ -9,7 +9,8 @@ circuit_js/
 *.ptau
 
 # dependencies
-/node_modules
+node_modules
+package-lock.json
 /.pnp
 .pnp.js
 
@@ -31,6 +32,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
+.env
 .env*.local
 
 # vercel
