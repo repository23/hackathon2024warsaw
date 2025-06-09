@@ -16,12 +16,19 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useGame, COLORS } from "../context/GameContext";
-import { WalletSelect } from '@talismn/connect-components';
+//import { WalletSelect } from '@talismn/connect-components';
+import dynamic from "next/dynamic";
 import { FaTimes } from "react-icons/fa";
 import { BsShieldCheck } from "react-icons/bs";
 
+const WalletSelect = dynamic(() =>
+  import('@talismn/connect-components').then((mod) => mod.WalletSelect), {
+    ssr: false,
+  }
+);
+
 const Game: React.FC = () => {
-  const { game, dispatch, accountAddr, setAccountAddr, submitRow, submitGame, verify } = useGame();
+  const { game, dispatch, accountAddr, setAccountAddr, setWalletSource, submitRow, submitGame, verify } = useGame();
   const [ isWalletSelectOpen, setIsWalletSelectOpen ] = useState(false);
 
   const currentRow = game.board.map((row) => row.submitted).indexOf(false);
@@ -80,10 +87,10 @@ const Game: React.FC = () => {
                 <WalletSelect
                   dappName="zkLeaderboardMastermind"
                   open={isWalletSelectOpen}
-                  showAccountsList={false}
+                  showAccountsList={true}
                   onWalletConnectOpen={() => setIsWalletSelectOpen(true)}
                   onWalletConnectClose={() => setIsWalletSelectOpen(false)}
-                  onWalletSelected={(wallet: any) => {}}  /* TODO: why is the wallet source always null? */
+                  onWalletSelected={(wallet: any) => setWalletSource(wallet.extensionName)}
                   onAccountSelected={(account: any) => setAccountAddr(account.address)}
                   onUpdatedAccounts={(accounts: any[] | undefined) => setAccountAddr(accounts && accounts[0] ? accounts[0].address : null)}
                 />

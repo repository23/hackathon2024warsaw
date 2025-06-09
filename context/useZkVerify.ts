@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Library, CurveType } from 'zkverifyjs';
 
 export function useZkVerify(selectedAccount: string | null) {
   const [verifying, setVerifying] = useState(false);
@@ -23,7 +24,6 @@ export function useZkVerify(selectedAccount: string | null) {
         throw new Error('No account connected');
       }
 */
-      const proofData = JSON.parse(proof);
 
       let zkVerifySession;
       try {
@@ -43,11 +43,21 @@ export function useZkVerify(selectedAccount: string | null) {
       } catch (error: unknown) {
         throw new Error(`Connection failed: ${(error as Error).message}`);
       }
-
+      
       const { events, transactionResult } = await session
         .verify()
-        .groth16()
-        .execute(proofData, publicSignals, vk);
+        .groth16({
+          library: Library.snarkjs,
+          curve: CurveType.bn128
+        })
+        .execute({
+          proofData: {
+            proof,
+	    publicSignals,
+	    vk,
+	  },
+	  domainId: 42,
+	});
 
       events.on('ErrorEvent', (eventData) => {
         console.error(JSON.stringify(eventData));
@@ -60,8 +70,12 @@ export function useZkVerify(selectedAccount: string | null) {
         throw new Error(`Transaction failed: ${(error as Error).message}`);
       }
 
-      if (transactionInfo && transactionInfo.attestationId) {
+      console.log(transactionInfo);
+      console.log({"aggregationId": transactionInfo.aggregationId});
+
+      if (transactionInfo && transactionInfo.aggregationId) {
         setVerified(true);
+	console.log(transactionInfo.aggregationId + "...");
         return transactionInfo;
       } else {
         throw new Error("Your proof isn't correct.");

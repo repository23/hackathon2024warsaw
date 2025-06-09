@@ -30,7 +30,7 @@
     "remove": "^0.1.5",
     "seedrandom": "^3.0.5",
     "snarkjs": "^0.7.5",
-    "zkverifyjs": "^0.13.0"
+    "zkverifyjs": "^0.14.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.17",

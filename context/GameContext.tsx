@@ -149,6 +149,7 @@ type GameContextValue = {
   game: Game;
   accountAddr: string | null;
   setAccountAddr: React.Dispatch<React.SetStateAction<string | null>>;
+  setWalletSource: React.Dispatch<React.SetStateAction<string | null>>;
   dispatch: React.Dispatch<GameAction>;
   submitRow: (row: number) => void;
   submitGame: () => void;
@@ -268,6 +269,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
   );
 
   const [ accountAddr, setAccountAddr ] = useState<string | null>(null);
+  const [ walletSource, setWalletSource ] = useState<string | null>(null);
   const { onSyncLeaderboard } = useLeaderboard(LEADERBOARD_SIZE);
   const { verifying, verified, error, onVerifyProof } = useZkVerify(null);
 
@@ -368,10 +370,10 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
     });
 
     const transactionInfo = await onVerifyProof(
-      JSON.stringify(proof.proof),
+      proof.proof,
       proof.publicSignals,
       vkey,
-      "talismn",  /* What is the wallet source attribute of Talisman? */
+      walletSource,
       accountAddr
     );
     console.log(verified);
@@ -416,7 +418,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
   }
 
   return (
-    <GameContext.Provider value={{ game, dispatch, accountAddr, setAccountAddr, submitRow, submitGame, verify }}>
+    <GameContext.Provider value={{ game, dispatch, accountAddr, setAccountAddr, setWalletSource, submitRow, submitGame, verify }}>
       {children}
     </GameContext.Provider>
   );
