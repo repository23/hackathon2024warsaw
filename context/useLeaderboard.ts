@@ -1,19 +1,19 @@
 import { useState } from 'react';
 
 export function useLeaderboard(size: number) {
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [error, setError] = useState<string | null>(null);
 
-  const onSyncLeaderboard = async () => {
+  const syncLeaderboard = async () => {
     setError(null);
 
     try {
-      const res = await fetch(`/api/leaderboard?size=${size}`);
+      const res = await fetch(`/api/leaderboard?size=${Math.floor(size)}`);
       if (res.ok) {
         const _ = await res.json();
-        setLeaderboard(_);
+        setEntries(Array.isArray(_) ? _ : []);
       } else {
-        setLeaderboard([]);
+        setEntries([]);
         throw new Error("Leaderboard syncing failed");
       }
     } catch (error: unknown) {
@@ -21,5 +21,5 @@ export function useLeaderboard(size: number) {
     }
   };
 
-  return { leaderboard, onSyncLeaderboard };
+  return { syncLeaderboard, entries, error };
 }

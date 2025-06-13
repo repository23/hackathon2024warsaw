@@ -1,15 +1,13 @@
 import { useToast } from "@chakra-ui/react";
 //import { useContract } from "@thirdweb-dev/react";
 import { useZkVerify } from "./useZkVerify";
-import { useLeaderboard } from "./useLeaderboard";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import vkey from "../circuits/mastermind/keys/verification_key.json";
 import random from "seedrandom";
 
 const CODE_SIZE = 4;
 const NUM_ROWS = 10;
 const NUM_COLORS = 8;
-const LEADERBOARD_SIZE = 10;
 
 export const COLORS: Record<number, Record<string, string>> = {
   0: {
@@ -270,8 +268,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
   const [ accountAddr, setAccountAddr ] = useState<string | null>(null);
   const [ walletSource, setWalletSource ] = useState<string | null>(null);
-  const { onSyncLeaderboard } = useLeaderboard(LEADERBOARD_SIZE);
-  const { verifying, verified, error, onVerifyProof } = useZkVerify(null);
+  const { verifying, verified, txHash, error, onVerifyProof } = useZkVerify(null);
 
   // The error "destroy is not a function" occurs with this useEffect
   /*React.useEffect(async () => {
@@ -283,6 +280,23 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
     }
     return () => {};
   }, [game.solved, toast]);*/
+
+  useEffect(async () => {
+    if (txHash) {
+      fetch("/api/leaderboard", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          account: accountAddr,
+          score: game.score,
+          verified: verified,
+          gameplayHash: game.proof.publicSignals[1]
+        }),
+      });
+    }
+  }, [txHash]);
 
   async function submitRow(row: number) {
     const guessText = game.board[row].guess
@@ -348,8 +362,6 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
         body: `${JSON.stringify(data.proof)}`
       },
     });
-
-    await onSyncLeaderboard();
   }
 
   async function verify() {
@@ -369,7 +381,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
       },
     });
 
-    const transactionInfo = await onVerifyProof(
+    await onVerifyProof(
       proof.proof,
       proof.publicSignals,
       vkey,
@@ -400,7 +412,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
           : `Contract rejected, proof is invalid!`,
       },
     });
-
+/*
     const res = await fetch("/api/leaderboard", {
       method: "POST",
       headers: {
@@ -413,12 +425,11 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
         gameplayHash: proof.publicSignals[1] 
       }),
     });
-
-    await onSyncLeaderboard();
+*/
   }
 
   return (
-    <GameContext.Provider value={{ game, dispatch, accountAddr, setAccountAddr, setWalletSource, submitRow, submitGame, verify }}>
+    <GameContext.Provider value={{ game, dispatch, accountAddr, setAccountAddr, walletSource, setWalletSource, submitRow, submitGame, verify }}>
       {children}
     </GameContext.Provider>
   );

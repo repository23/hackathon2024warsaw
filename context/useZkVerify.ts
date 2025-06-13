@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { Library, CurveType } from 'zkverifyjs';
+import { zkVerifySession, Library, CurveType } from 'zkverifyjs';
 
 export function useZkVerify(selectedAccount: string | null) {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const onVerifyProof = async (proof: string, publicSignals: string[], vk: any, connectedWallet: string | null, connectedAccountAddress: string | null) => {
     setVerifying(true);
     setVerified(false);
+    setTxHash(null);
     setError(null);
 
     try {
@@ -19,19 +21,9 @@ export function useZkVerify(selectedAccount: string | null) {
       if (!proof || !publicSignals || !vk) {
         throw new Error('Proof, public signals, or verification key is missing');
       }
-/*
-      if (!connectedAccountAddress) {
-        throw new Error('No account connected');
-      }
-*/
 
-      let zkVerifySession;
-      try {
-        zkVerifySession = (await import('zkverifyjs')).zkVerifySession;
-      } catch (error: unknown) {
-        throw new Error(
-          `Failed to load zkVerifySession: ${(error as Error).message}`
-        );
+      if (!connectWallet || !connectedAccountAddress) {
+        throw new Error('No wallet or account connected');
       }
 
       let session;
@@ -59,10 +51,24 @@ export function useZkVerify(selectedAccount: string | null) {
 	  domainId: 42,
 	});
 
-      events.on('ErrorEvent', (eventData) => {
+      events.on('includedInBlock', (eventData) => {
+        console.log('Proof transaction is included in block:', eventData);
+      });
+
+      events.on('finalized', (eventData) => {
+        console.log('Proof transaction processing is finalized:', eventData);
+        if (eventData.status == "finalized" && eventData.blockHash && (eventData.txHash || eventData.transactionHash)) {
+          setTxHash(eventData.txHash ? eventData.txHash : eventData.transactionHash);
+          setVerified(true);
+	}
+      });
+
+      events.on('error', (error) => {
         console.error(JSON.stringify(eventData));
       });
 
+// The following does not work as the responded {transactionInfo.domainId} and {transactionInfo.aggregationId} are still undefined despite the proof transaction get processed successfully
+/*
       let transactionInfo = null;
       try {
         transactionInfo = await transactionResult;
@@ -71,7 +77,6 @@ export function useZkVerify(selectedAccount: string | null) {
       }
 
       console.log(transactionInfo);
-      console.log({"aggregationId": transactionInfo.aggregationId});
 
       if (transactionInfo && transactionInfo.aggregationId) {
         setVerified(true);
@@ -80,6 +85,7 @@ export function useZkVerify(selectedAccount: string | null) {
       } else {
         throw new Error("Your proof isn't correct.");
       }
+*/
     } catch (error: unknown) {
       setError((error as Error).message);
     } finally {
@@ -87,5 +93,5 @@ export function useZkVerify(selectedAccount: string | null) {
     }
   };
 
-  return { verifying, verified, error, onVerifyProof };
+  return { verifying, verified, txHash, error, onVerifyProof };
 }

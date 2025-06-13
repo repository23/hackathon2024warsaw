@@ -28,7 +28,7 @@ const WalletSelect = dynamic(() =>
 );
 
 const Game: React.FC = () => {
-  const { game, dispatch, accountAddr, setAccountAddr, setWalletSource, submitRow, submitGame, verify } = useGame();
+  const { game, dispatch, accountAddr, setAccountAddr, walletSource, setWalletSource, submitRow, submitGame, verify } = useGame();
   const [ isWalletSelectOpen, setIsWalletSelectOpen ] = useState(false);
 
   const currentRow = game.board.map((row) => row.submitted).indexOf(false);
@@ -105,7 +105,7 @@ const Game: React.FC = () => {
                   Prove
                 </Button>
               )}
-              {game.solved && game.proof && !game.verified && (
+              {walletSource && accountAddr && game.solved && game.proof && !game.verified && (
                 <Button
                   size="sm"
                   colorScheme="gray"
@@ -142,7 +142,7 @@ const Game: React.FC = () => {
                   </Tooltip>
                 </Flex>
               )}
-              {(game.verified || game.board[9].submitted) && (
+              {(((!walletSource || !accountAddr) && game.solved) || game.verified || game.board[9].submitted) && (
                 <Button
                   size="sm"
                   colorScheme="blue"

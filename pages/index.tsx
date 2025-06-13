@@ -14,7 +14,7 @@ import { NextSeo } from "next-seo";
 import About from "../components/About";
 import Game from "../components/Game";
 import Rules from "../components/Rules";
-import Scores from "../components/Scores";
+import HallOfFame from "../components/HallOfFame";
 
 export default function Mastermind() {
   return (
@@ -88,7 +88,7 @@ export default function Mastermind() {
                   <About />
                 </TabPanel>
                 <TabPanel pt="24px">
-                  <Scores />
+                  <HallOfFame />
                 </TabPanel>
               </TabPanels>
             </Tabs>
