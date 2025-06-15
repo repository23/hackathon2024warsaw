@@ -105,7 +105,7 @@ const Game: React.FC = () => {
                   Prove
                 </Button>
               )}
-              {walletSource && accountAddr && game.solved && game.proof && !game.verified && (
+              {walletSource && accountAddr && game.solved && game.verifiable && game.proof && !game.verified && (
                 <Button
                   size="sm"
                   colorScheme="gray"
@@ -116,7 +116,7 @@ const Game: React.FC = () => {
                   zkVerify
                 </Button>
               )}
-              {game.verified && game.valid && (
+              {game.verifiable && game.verified && game.valid && (
                 <Flex flexGrow={1} justify="center" gap={2} minWidth="64px">
                   <Tooltip
                     label="The proof sent for this gameplay has been verified by a zkSNARK"
@@ -129,7 +129,7 @@ const Game: React.FC = () => {
                   </Tooltip>
                 </Flex>
               )}
-              {game.verified && !game.valid && (
+              {game.verifiable && game.verified && !game.valid && (
                 <Flex flexGrow={1} justify="center" gap={2} minWidth="64px">
                   <Tooltip
                     label="The proof sent for this gameplay is invalid"
@@ -142,7 +142,7 @@ const Game: React.FC = () => {
                   </Tooltip>
                 </Flex>
               )}
-              {(((!walletSource || !accountAddr) && game.solved) || game.verified || game.board[9].submitted) && (
+              {(((!walletSource || !accountAddr || !game.verifiable) && game.solved) || game.verified || game.board[9].submitted) && (
                 <Button
                   size="sm"
                   colorScheme="blue"

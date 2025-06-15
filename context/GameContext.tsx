@@ -136,6 +136,7 @@ type Game = {
   color: number;
   solved: boolean;
   valid: boolean;
+  verifiable: boolean;
   verified: boolean;
   isLoading: boolean;
   logs: Log[];
@@ -154,6 +155,15 @@ type GameContextValue = {
   verify: () => void;
 };
 
+interface TxInfo {
+  domainId?: number;
+  aggregationId?: number;
+  blockHash?: string;
+  txHash?: string;
+  statement?: string | null;
+  status: string;
+}
+
 const DEFAULT_GAME = {
   id: Math.floor(Math.random() * 0xDEADBEEF),
   board: Array.from(Array(NUM_ROWS).keys()).map(() => ({
@@ -165,6 +175,7 @@ const DEFAULT_GAME = {
   color: 0,
   solved: false,
   valid: false,
+  verifiable: false,
   verified: false,
   isLoading: false,
   logs: [],
@@ -242,6 +253,9 @@ const gameReducer = (state: Game, action: GameAction) => {
       updatedState.score = parseInt(action.payload.proof.publicSignals[0]);
       updatedState.focusedRow = -1;
       return updatedState;
+    case "SUBMISSION_DONE":
+      updatedState.verifiable = action.payload.verifiable;
+      return updatedState;
     case "VERIFY_GAME":
       updatedState.verified = true;
       updatedState.valid = action.payload.valid;
@@ -268,10 +282,10 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
   const [ accountAddr, setAccountAddr ] = useState<string | null>(null);
   const [ walletSource, setWalletSource ] = useState<string | null>(null);
-  const { verifying, verified, txHash, error, onVerifyProof } = useZkVerify(null);
+  const { onVerifyProof } = useZkVerify(null);
 
   // The error "destroy is not a function" occurs with this useEffect
-  /*React.useEffect(async () => {
+  /*useEffect(async () => {
     if (game.solved) {
       toast({
         title: "Congratulations, you broke the code!",
@@ -280,23 +294,6 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
     }
     return () => {};
   }, [game.solved, toast]);*/
-
-  useEffect(async () => {
-    if (txHash) {
-      fetch("/api/leaderboard", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          account: accountAddr,
-          score: game.score,
-          verified: verified,
-          gameplayHash: game.proof.publicSignals[1]
-        }),
-      });
-    }
-  }, [txHash]);
 
   async function submitRow(row: number) {
     const guessText = game.board[row].guess
@@ -330,38 +327,61 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
       numPartial: game.board.map((thisRow: Row) => thisRow.partial),
       numCorrect: game.board.map((thisRow: Row) => thisRow.correct),
     };
+    
+    try {
+      const res = await fetch("/api/proof", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ guessData, id: game.id }),
+      });
 
-    const res = await fetch("/api/proof", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ guessData, id: game.id }),
-    });
+      const data = await res.json();
 
-    const data = await res.json();
+      dispatch({
+        type: "SUBMIT_GAME",
+        payload: {
+          proof: data,
+        }
+      });
 
-    dispatch({
-      type: "SET_LOADING",
-      payload: {
-        loading: false,
-      },
-    });
+      dispatch({
+        type: "ADD_LOG",
+        payload: {
+          title: `Received zkSNARK proof from the code maker of the game, with a score of ${data.publicSignals[0]}`,
+          body: `${JSON.stringify(data.proof)}`
+        },
+      });
 
-    dispatch({
-      type: "SUBMIT_GAME",
-      payload: {
-        proof: data,
-      }
-    });
+      dispatch({
+        type: "SUBMISSION_DONE",
+        payload: {
+          verifiable: true,
+        },
+      });
+    } catch (error: unknown) {
+      dispatch({
+        type: "ADD_LOG",
+        payload: {
+          title: `Error in zkSNARK proof generation of this game: ${(error as Error).message}`,
+        },
+      });
 
-    dispatch({
-      type: "ADD_LOG",
-      payload: {
-        title: `Received zkSNARK proof from the code maker of the game, with a score of ${data.publicSignals[0]}`,
-        body: `${JSON.stringify(data.proof)}`
-      },
-    });
+      dispatch({
+        type: "SUBMISSION_DONE",
+        payload: {
+          verifiable: false,
+        },
+      });
+    } finally {
+      dispatch({
+        type: "SET_LOADING",
+        payload: {
+          loading: false,
+        },
+      });
+    }
   }
 
   async function verify() {
@@ -381,51 +401,91 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
       },
     });
 
-    await onVerifyProof(
-      proof.proof,
-      proof.publicSignals,
-      vkey,
-      walletSource,
-      accountAddr
-    );
-    console.log(verified);
+    try {
+      const { events } = await onVerifyProof(
+        proof.proof,
+        proof.publicSignals,
+        vkey,
+        walletSource,
+        accountAddr
+      );
+    
+      events.on('error', (error: Error) => {
+        console.error('Error in proof transaction processing:', error);
+        //throw error;
+      });
 
-    dispatch({
-      type: "SET_LOADING",
-      payload: {
-        loading: false,
-      },
-    });
+      events.on('includedInBlock', (eventData) => {
+        console.log('Proof transaction is included in block:', eventData);
+      });
 
-    dispatch({
-      type: "VERIFY_GAME",
-      payload: {
-        valid: verified,
-      },
-    });
+      events.on('finalized', (eventData) => {
+        console.log('Proof transaction processing is finalized:', eventData);
+        const finalizedTx: TxInfo = {
+          ...eventData,
+          txHash: eventData.txHash ? eventData.txHash : eventData.transactionHash,
+        };
+        
+        const valid = !!(finalizedTx && finalizedTx.status == "finalized" && finalizedTx.blockHash && finalizedTx.txHash)
+          
+        dispatch({
+          type: "VERIFY_GAME",
+          payload: {
+            valid: valid,
+          },
+        });
 
-    dispatch({
-      type: "ADD_LOG",
-      payload: {
-        title: verified
-          ? `Proof succesfully verified by contract!`
-          : `Contract rejected, proof is invalid!`,
-      },
-    });
-/*
-    const res = await fetch("/api/leaderboard", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ 
-        account: accountAddr,
-        score: game.score,
-        verified: verified,
-        gameplayHash: proof.publicSignals[1] 
-      }),
-    });
-*/
+        dispatch({
+          type: "ADD_LOG",
+          payload: {
+            title: valid
+              ? 'Proof succesfully verified by contract!'
+              : 'Contract rejected, proof is invalid!',
+          },
+        });
+        
+        fetch("/api/leaderboard", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            account: accountAddr,
+            score: game.score,
+            verified: valid,
+            gameplayHash: game.proof.publicSignals[1]
+          }),
+        });
+
+        dispatch({
+          type: "SET_LOADING",
+          payload: {
+            loading: false,
+          },
+        });
+      });
+    } catch (error: unknown) {
+      dispatch({
+        type: "ADD_LOG",
+        payload: {
+          title: `Error in proof verification process: ${(error as Error).message}`,
+        },
+      });
+      
+      dispatch({
+        type: "VERIFY_GAME",
+        payload: {
+          valid: false,
+        },
+      });
+
+      dispatch({
+        type: "SET_LOADING",
+        payload: {
+          loading: false,
+        },
+      });
+    }
   }
 
   return (
