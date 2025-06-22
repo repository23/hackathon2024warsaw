@@ -155,6 +155,13 @@ type GameContextValue = {
   verify: () => void;
 };
 
+type LeaderboardEntry = {
+  account: string;
+  score: number;
+  verified: boolean;
+  gameplayHash: string;
+};
+
 interface TxInfo {
   domainId?: number;
   aggregationId?: number;
@@ -282,18 +289,24 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
 
   const [ accountAddr, setAccountAddr ] = useState<string | null>(null);
   const [ walletSource, setWalletSource ] = useState<string | null>(null);
+  const [ gameplayEntry, setGameplayEntry ] = useState<LeaderboardEntry | null>(null);
+
   const { onVerifyProof } = useZkVerify(null);
 
-  // The error "destroy is not a function" occurs with this useEffect
-  /*useEffect(async () => {
-    if (game.solved) {
+  useEffect(() => {
+    if (game.solved)
       toast({
         title: "Congratulations, you broke the code!",
         status: "success",
       });
-    }
-    return () => {};
-  }, [game.solved, toast]);*/
+  }, [game.solved, toast]);
+
+  async function newGame() {
+    dispatch({
+      type: "NEW_GAME",
+    });
+    setGameplayEntry(null);
+  }
 
   async function submitRow(row: number) {
     const guessText = game.board[row].guess
@@ -412,7 +425,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
     
       events.on('error', (error: Error) => {
         console.error('Error in proof transaction processing:', error);
-        //throw error;
+        throw error;
       });
 
       events.on('includedInBlock', (eventData) => {
@@ -443,25 +456,19 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
               : 'Contract rejected, proof is invalid!',
           },
         });
-        
-        fetch("/api/leaderboard", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            account: accountAddr,
-            score: game.score,
-            verified: valid,
-            gameplayHash: game.proof.publicSignals[1]
-          }),
-        });
 
         dispatch({
           type: "SET_LOADING",
           payload: {
             loading: false,
           },
+        });
+
+        setGameplayEntry({
+          account: accountAddr,
+          score: game.score,
+          verified: valid,
+          gameplayHash: game.proof.publicSignals[1],
         });
       });
     } catch (error: unknown) {
@@ -489,7 +496,7 @@ const GameProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
   }
 
   return (
-    <GameContext.Provider value={{ game, dispatch, accountAddr, setAccountAddr, walletSource, setWalletSource, submitRow, submitGame, verify }}>
+    <GameContext.Provider value={{ game, dispatch, accountAddr, setAccountAddr, walletSource, setWalletSource, gameplayEntry, newGame, submitRow, submitGame, verify }}>
       {children}
     </GameContext.Provider>
   );

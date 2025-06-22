@@ -28,6 +28,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (!(REAL_ROWS <= NUM_ROWS && numCorrect.length == REAL_ROWS && guess.length == REAL_ROWS * CODE_SIZE)) {
     return res.status(400).end();
   }
+  const SCORE_FACTORS = process.env.SCORE_FACTORS ? (JSON.parse(process.env.SCORE_FACTORS)).slice(0, CODE_SIZE) : [3, 8, 25, 90];
 
   const generator = random(id.toString());
   const solution = [];
@@ -57,6 +58,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     numCorrect,
     solution,
     gameplaySalt: salt,
+    scoreFactor: SCORE_FACTORS,
   };
 
   const { proof, publicSignals } = await snarkjs.groth16.fullProve(

@@ -19,12 +19,13 @@ template ValidColor(numColors) {
 template Mastermind(codeSize, numRows, numColors) {
   // ================== ASSERTIONS =================
   assert(codeSize <= 8); // No more than 8 possible values in code
-  assert(numRows <= 32); // No more than 32 guess rounds as maximum
   assert(numColors <= 16); // No more that 16 possible colors
+  assert(numRows >= 3); // No less than 3 allowed guess rounds
+  assert(numRows <= 32); // No more than 32 allowed guess rounds
   assert(codeSize <= numRows); // No more possible values than guess rounds
   assert(codeSize <= numColors); // No more possible values than colors
 
-  // ============= PUBLIC INPUT SIGANLS ============
+  // ============ PUBLIC INPUT SIGNALS =============
   signal input gameplayHash; // Currently the hash of the breakers gameplay acts as authentication
 
   // ============ PRIVATE INPUT SIGNALS ============
@@ -33,8 +34,13 @@ template Mastermind(codeSize, numRows, numColors) {
   signal input numCorrect[numRows]; // The number of correct matches (correct color and correct location) of each guess
   signal input solution[codeSize]; // The game masters private solution
   signal input gameplaySalt; // The game masters private salt for the gameplay hash calculation
+  signal input scoreFactor[codeSize]; // The factor of each number of correct matches that are multiplied by the weight of the round reaching at least such number of correct matches
 
-  // ================ OUTPUT SIGNALS ===============
+  // ============ INTERMEDIATE SIGNALS =============
+  signal maxReachedCorrect[numRows]; // The maximum of correct matches till each guess round
+  signal scoreItems[numRows * codeSize]; // To calculate the final score by each guess round and each number of correct matches reached
+
+  // =============== OUTPUT SIGNALS ================
   signal output score; // The score of the gameplay
 
   component guessColorsValid[numRows * codeSize];
@@ -139,26 +145,42 @@ template Mastermind(codeSize, numRows, numColors) {
 
   gameplayHashByRound[numRows - 1].out === gameplayHash;
 
-  // Calculate score
-  var realNumRows = 0;
-  component broken[numRows];
-  component finished[numRows];
-  for (var i = 0; i < numRows; i++) {
-    broken[i] = IsEqual();
-    broken[i].in[0] <== codeSize;
-    broken[i].in[1] <== numCorrect[i];
-    
-    finished[i] = OR();
-    if (i == 0)
-      finished[i].a <== 0;
+  // Calculate score weight of each round, following the Fibonacci sequence
+  // Note that the weight of round i is the sum of roundWeightDiff[i..numRows)
+  var roundWeightDiff[numRows];
+  for (var i = numRows - 1; i >= 0; i--) {
+    if (i + 3 >= numRows)
+      roundWeightDiff[i] = 1;
     else
-      finished[i].a <== finished[i - 1].out;
-    finished[i].b <== broken[i].out;
-
-    realNumRows += 1 - finished[i].out;
+      roundWeightDiff[i] = roundWeightDiff[i + 1] + roundWeightDiff[i + 2];
   }
 
-  score <== numRows - realNumRows;
+  // Calculate score
+  // Scoring formula: sum of (the weight of round R(j) times the score factor of j), in which R(j) is the earliest guess round that reaches at least j correct matches, for all j in [1..codeSize]
+  component moreCorrect[numRows];
+  for (var i = 0; i < numRows; i++) {
+    moreCorrect[i] = GreaterThan(4);
+    if (i == 0)
+      moreCorrect[i].in[0] <== 0;
+    else
+      moreCorrect[i].in[0] <== maxReachedCorrect[i - 1];
+    moreCorrect[i].in[1] <== numCorrect[i];
+
+    maxReachedCorrect[i] <== numCorrect[i] + moreCorrect[i].out * (moreCorrect[i].in[0] - numCorrect[i]);
+  }
+
+  component moreThanJCorrect[numRows * codeSize];
+  var totalScore = 0;
+  for (var i = 0; i < numRows; i++)
+    for (var j = 0; j < codeSize; j++) {
+      moreThanJCorrect[i * codeSize + j] = GreaterThan(4);
+      moreThanJCorrect[i * codeSize + j].in[0] <== maxReachedCorrect[i];
+      moreThanJCorrect[i * codeSize + j].in[1] <== j;
+      scoreItems[i * codeSize + j] <== moreThanJCorrect[i * codeSize + j].out * scoreFactor[j];
+      totalScore += roundWeightDiff[i] * scoreItems[i * codeSize + j];
+    }
+
+  score <== totalScore;
 }
 
 component main { public [gameplayHash] } = Mastermind(4, 10, 9);
