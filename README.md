@@ -21,6 +21,6 @@ The other major issue on which we are struggling is the intricacy of local testi
 
 ## Team members & roles
 
-- Barnaba Pawelczak: frontend designing, debugging and presentation slides
+- B: frontend designing, debugging and presentation slides
 - RSSC No1: base project exploration, programming, local environment configuration and testing
 
